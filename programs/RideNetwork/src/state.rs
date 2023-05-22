@@ -6,7 +6,7 @@ pub struct Global {
     pub is_initialized: bool,
     pub platform_fee_basis_point: u16,
     pub proposal_interval: u64,
-    pub last_update: bool,
+    pub last_update: u64,
 }
 
 #[account]

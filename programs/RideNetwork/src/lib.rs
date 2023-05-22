@@ -35,6 +35,7 @@ pub mod ride_network {
         Ok(())
     }
 
+    // COUNTRY
     pub fn init_or_update_country(
         ctx: Context<InitOrUpdateCountry>,
         params: InitOrUpdateCountryParam,
@@ -43,11 +44,22 @@ pub mod ride_network {
         process_init_or_update_country(ctx, params, alpha3_country_code)?;
         Ok(())
     }
-
     pub fn update_new_country_authority(ctx: Context<ChangeCountryAuthority>) -> Result<()> {
         process_change_country_authority(ctx)?;
         Ok(())
     }
+
+    // Add and update country jobs
+    pub fn add_new_country_job(
+        ctx: Context<InitOrUpdateJob>,
+        _job_count: u64,
+        job_name: String,
+    ) -> Result<()> {
+        process_add_new_country_job(ctx, job_name)?;
+        Ok(())
+    }
+
+    // Verify driver and rider infra
     pub fn approve_driver_infra(
         ctx: Context<ApproveDriverInfra>,
         _driver_infra_count: u64,

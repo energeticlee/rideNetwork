@@ -29,12 +29,21 @@ pub fn process_init_or_update_country(
 
         params.update_or_same(country_state)?;
     }
+    country_state.last_update = Clock::get().unwrap().unix_timestamp as u64;
 
     Ok(())
 }
 
 pub fn process_change_country_authority(ctx: Context<ChangeCountryAuthority>) -> Result<()> {
     ctx.accounts.country_state.update_authority = ctx.accounts.new_authority.key();
+    ctx.accounts.country_state.last_update = Clock::get().unwrap().unix_timestamp as u64;
+    Ok(())
+}
+
+pub fn process_add_new_country_job(ctx: Context<InitOrUpdateJob>, job_name: String) -> Result<()> {
+    ctx.accounts.job_type.country_owner = ctx.accounts.country_state.key();
+    ctx.accounts.job_type.name = job_name;
+    ctx.accounts.job_type.is_available = true;
     Ok(())
 }
 

@@ -41,6 +41,23 @@ pub struct ChangeCountryAuthority<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// Add or update jobs
+#[derive(Accounts)]
+#[instruction(job_count: u64, job_name: String)]
+pub struct InitOrUpdateJob<'info> {
+    #[account(init_if_needed, seeds=[b"job".as_ref(), country_state.key().as_ref(), &job_count.to_le_bytes()], bump, payer = update_authority, space = JobType::len(&job_name))]
+    pub job_type: Account<'info, JobType>,
+    #[account(mut, seeds=[b"country"], bump)]
+    pub country_state: Account<'info, Country>,
+    #[account(
+        mut,
+        constraint = country_state.update_authority == update_authority.key()
+    )]
+    pub update_authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
 // APPROVE DRIVER APPLICATION
 #[derive(Accounts)]
 #[instruction(driver_infra_count: u64)]
@@ -212,6 +229,7 @@ pub struct InitOrUpdateCountryParam {
     pub min_driver_infra_deposit: Option<u64>,
     pub min_rider_infra_deposit: Option<u64>,
     pub base_slash_amount: Option<u64>,
+    pub epoch_duration_days: Option<u16>,
 }
 
 impl InitOrUpdateCountryParam {
@@ -228,6 +246,7 @@ impl InitOrUpdateCountryParam {
             || self.finalize_duration_sec.is_none()
             || self.min_driver_infra_deposit.is_none()
             || self.min_rider_infra_deposit.is_none()
+            || self.epoch_duration_days.is_none()
         {
             return err!(ErrorCode::InvalidCreateCountryParams);
         };
@@ -247,6 +266,7 @@ impl InitOrUpdateCountryParam {
         country_state.min_driver_infra_deposit = self.min_driver_infra_deposit.unwrap();
         country_state.min_rider_infra_deposit = self.min_rider_infra_deposit.unwrap();
         country_state.base_slash_amount = self.base_slash_amount.unwrap();
+        country_state.epoch_duration_days = self.epoch_duration_days.unwrap();
         Ok(())
     }
     pub fn update_or_same(&self, country_state: &mut Country) -> Result<()> {
@@ -287,6 +307,9 @@ impl InitOrUpdateCountryParam {
         country_state.base_slash_amount = self
             .base_slash_amount
             .unwrap_or(country_state.base_slash_amount);
+        country_state.epoch_duration_days = self
+            .epoch_duration_days
+            .unwrap_or(country_state.epoch_duration_days);
 
         Ok(())
     }
