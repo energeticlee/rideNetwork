@@ -1,0 +1,2 @@
+Warning: cargo-build-bpf is deprecated. Please, use cargo-build-sbf
+cargo-build-bpf child: /home/justinlee/.local/share/solana/install/active_release/bin/cargo-build-sbf --arch bpf
