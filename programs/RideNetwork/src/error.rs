@@ -4,6 +4,8 @@ use anchor_lang::prelude::*;
 pub enum ErrorCode {
     #[msg("Not all params are provided")]
     InvalidCreateGlobalParams,
+    #[msg("Not all params are provided")]
+    InvalidCreateCountryParams,
     #[msg("Invalid Update Authority")]
     InvalidUpdateAuthority,
     #[msg("Company name, uen, and website required")]

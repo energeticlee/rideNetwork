@@ -7,10 +7,12 @@ use crate::state::JobType;
 use anchor_lang::prelude::*;
 use processor::country_processor::*;
 use processor::driver_processor::*;
+use processor::global_processor::*;
 use processor::rider_processor::*;
 use state::*;
 use validator::country_validator::*;
 use validator::driver_validator::*;
+use validator::global_validator::*;
 use validator::rider_validator::*;
 
 declare_id!("AdzUEnPqSShvbkMyEsPuz1AZGaKdb6x9kH3hbbtEvKym");
@@ -21,6 +23,18 @@ pub mod ride_network {
     use super::*;
 
     // GLOBAL
+    pub fn init_or_update_global(
+        ctx: Context<InitOrUpdateGlobal>,
+        params: InitOrUpdateGlobalParam,
+    ) -> Result<()> {
+        process_init_or_update_global(ctx, params)?;
+        Ok(())
+    }
+    pub fn change_gobal_authority(ctx: Context<ChangeGlobalAuthority>) -> Result<()> {
+        process_change_gobal_authority(ctx)?;
+        Ok(())
+    }
+
     pub fn init_or_update_country(
         ctx: Context<InitOrUpdateCountry>,
         params: InitOrUpdateCountryParam,
@@ -31,7 +45,7 @@ pub mod ride_network {
     }
 
     pub fn update_new_country_authority(ctx: Context<ChangeCountryAuthority>) -> Result<()> {
-        process_change_authority(ctx)?;
+        process_change_country_authority(ctx)?;
         Ok(())
     }
     pub fn approve_driver_infra(

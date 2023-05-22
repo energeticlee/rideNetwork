@@ -229,7 +229,7 @@ impl InitOrUpdateCountryParam {
             || self.min_driver_infra_deposit.is_none()
             || self.min_rider_infra_deposit.is_none()
         {
-            return err!(ErrorCode::InvalidCreateGlobalParams);
+            return err!(ErrorCode::InvalidCreateCountryParams);
         };
 
         country_state.platform_fee_basis_point = self.platform_fee_basis_point.unwrap();

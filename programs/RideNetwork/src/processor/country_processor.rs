@@ -33,7 +33,7 @@ pub fn process_init_or_update_country(
     Ok(())
 }
 
-pub fn process_change_authority(ctx: Context<ChangeCountryAuthority>) -> Result<()> {
+pub fn process_change_country_authority(ctx: Context<ChangeCountryAuthority>) -> Result<()> {
     ctx.accounts.country_state.update_authority = ctx.accounts.new_authority.key();
     Ok(())
 }

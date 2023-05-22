@@ -3,8 +3,10 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct Global {
     pub update_authority: Pubkey,
-    pub platform_fee_basis_point: u16,
     pub is_initialized: bool,
+    pub platform_fee_basis_point: u16,
+    pub proposal_interval: u64,
+    pub last_update: bool,
 }
 
 #[account]
@@ -24,10 +26,14 @@ pub struct Country {
     pub min_km_rate_cent: u64,
     pub min_min_fee_cent: u64,
     pub finalize_duration_sec: u64,
+    pub dispute_waitout_period: u64,
     pub min_driver_infra_deposit: u64,
     pub min_rider_infra_deposit: u64,
     pub base_slash_amount: u64,
     pub is_initialized: bool,
+    pub job_type_counter: u16,
+    pub epoch_duration_days: u16,
+    pub last_update: u64,
 }
 
 #[account]
@@ -41,6 +47,10 @@ pub struct DriverInfra {
     pub is_frozen: bool,
     pub driver_infra_fee_basis_point: u16,
     pub company_info_current_count: u64,
+    pub matched_ride: u64,
+    pub cancellation: u64,
+    pub dispute_cases: u64,
+    pub cases_lost_in_dispute: u64,
 }
 
 #[account]
@@ -60,6 +70,10 @@ pub struct RiderInfra {
     pub is_frozen: bool,
     pub rider_infra_fee_basis_point: u16,
     pub company_info_current_count: u64,
+    pub matched_ride: u64,
+    pub cancellation: u64,
+    pub dispute_cases: u64,
+    pub cases_lost_in_dispute: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -83,6 +97,7 @@ pub struct Job {
     pub driver_uuid: String,
     pub driver_infra: Pubkey,
     pub rider_infra: Pubkey,
+    pub settlement_protocol: Option<Pubkey>,
     pub total_fee_cent: u64,
     pub distribution: Vec<Distribution>,
     pub status: Status,
@@ -92,6 +107,13 @@ pub struct Job {
     pub job_end_time: Option<u64>,
     pub is_initialized: bool,
     pub data: String, // SHA256
+}
+
+#[account]
+pub struct JobType {
+    pub country_owner: Pubkey,
+    pub name: String,
+    pub is_available: bool,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq)]
@@ -107,14 +129,14 @@ pub enum Status {
     DisputeByRider,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug)]
-pub enum JobType {
-    Ride4Seater,
-    RideWithPets,
-    Ride4SeaterWithKids,
-    Ride6Seater,
-    PremiumSeater,
-}
+// #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug)]
+// pub enum JobType {
+//     Ride4Seater,
+//     RideWithPets,
+//     Ride4SeaterWithKids,
+//     Ride6Seater,
+//     PremiumSeater,
+// }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
 pub struct Distribution {
@@ -131,6 +153,12 @@ const BOOL: usize = 1;
 const U16: usize = 2;
 const U64: usize = 8;
 const UUID: usize = 23;
+
+impl Global {
+    pub fn len() -> usize {
+        DISCRIMINATOR + PUBKEY + BOOL + U16 + U64 + U64
+    }
+}
 
 impl Country {
     pub fn len() -> usize {
@@ -153,13 +181,30 @@ impl Country {
             + U64
             + U64
             + U64
+            + U64
             + BOOL
+            + U16
+            + U16
+            + U64
     }
 }
 
 impl DriverInfra {
     pub fn len() -> usize {
-        DISCRIMINATOR + PUBKEY + PUBKEY + U64 + U64 + BOOL + BOOL + BOOL + U16 + U64
+        DISCRIMINATOR
+            + PUBKEY
+            + PUBKEY
+            + U64
+            + U64
+            + BOOL
+            + BOOL
+            + BOOL
+            + U16
+            + U64
+            + U64
+            + U64
+            + U64
+            + U64
     }
 }
 
@@ -186,7 +231,19 @@ impl Driver {
 
 impl RiderInfra {
     pub fn len() -> usize {
-        DISCRIMINATOR + PUBKEY + PUBKEY + U64 + BOOL + BOOL + BOOL + U16 + U64
+        DISCRIMINATOR
+            + PUBKEY
+            + PUBKEY
+            + U64
+            + BOOL
+            + BOOL
+            + BOOL
+            + U16
+            + U64
+            + U64
+            + U64
+            + U64
+            + U64
     }
 }
 
@@ -196,13 +253,20 @@ impl Job {
             + UUID
             + PUBKEY
             + PUBKEY
+            + PUBKEY
             + U64
             + (PREFIX + (PUBKEY + U16) * *distribution_len as usize)
-            + U64
-            + U64
-            + U64
             + 1
+            + U64
+            + U64
+            + U64
             + BOOL
             + encrypted_data_size
+    }
+}
+
+impl JobType {
+    pub fn len(name: &String) -> usize {
+        DISCRIMINATOR + PUBKEY + (PREFIX + name.len() * CHAR) + BOOL
     }
 }
