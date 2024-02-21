@@ -1,38 +1,33 @@
 use crate::error::ErrorCode;
 use crate::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Transfer};
 
 pub fn process_init_or_update_global(
     ctx: Context<InitOrUpdateGlobal>,
-    params: InitOrUpdateGlobalParam,
+    platform_fee_basis_point: Option<u16>,
+    new_vehicle_or_pax_fee_cent: Option<u64>,
 ) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
 
-    msg!(
-        "global_state.is_initialized: {}",
-        global_state.is_initialized
-    );
     if !global_state.is_initialized {
-        msg!("Init Global");
         global_state.is_initialized = true;
-        global_state.update_authority = ctx.accounts.initializer.key();
-        params.init_new(global_state)?;
-    } else {
-        msg!("Updating Global");
-        if global_state.update_authority != ctx.accounts.initializer.key() {
-            return err!(ErrorCode::InvalidUpdateAuthority);
-        }
-
-        params.update_or_same(global_state)?;
+        global_state.update_authority = ctx.accounts.update_authority.key();
+        global_state.service_type_counter = 0;
+        global_state.vehicle_counter = 0;
+        global_state.passengers_type_counter = 0;
     }
-    global_state.last_update = Clock::get().unwrap().unix_timestamp as u64;
+
+    if platform_fee_basis_point.is_some() {
+        global_state.platform_fee_basis_point = platform_fee_basis_point.unwrap();
+    }
+    if new_vehicle_or_pax_fee_cent.is_some() {
+        global_state.new_vehicle_or_pax_fee_cent = new_vehicle_or_pax_fee_cent.unwrap();
+    }
 
     Ok(())
 }
 
 pub fn process_change_gobal_authority(ctx: Context<ChangeGlobalAuthority>) -> Result<()> {
     ctx.accounts.global_state.update_authority = ctx.accounts.new_authority.key();
-    ctx.accounts.global_state.last_update = Clock::get().unwrap().unix_timestamp as u64;
     Ok(())
 }

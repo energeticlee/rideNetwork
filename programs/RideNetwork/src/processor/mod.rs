@@ -1,4 +1,9 @@
 pub mod country_processor;
+pub mod customer_infra_processor;
+pub mod customer_processor;
+pub mod driver_infra_processor;
 pub mod driver_processor;
 pub mod global_processor;
-pub mod rider_processor;
+pub mod passenger_processor;
+pub mod service_processor;
+pub mod vehicle_processor;

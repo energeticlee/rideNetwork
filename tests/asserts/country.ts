@@ -10,7 +10,7 @@ export const initOrUpdateCountryAssert = async (
   alpha3CountryCode: string,
   mainWallet: anchor.web3.Keypair
 ) => {
-  const countryAccount = await getCountryData(program);
+  const countryAccount = await getCountryData(program, "SGP");
   // ASSERT TEST
   assert.equal(
     countryAccount.alpha3CountryCode,
@@ -37,9 +37,9 @@ export const initOrUpdateCountryAssert = async (
     "driverCancellationFeeSec"
   );
   assert.equal(
-    +countryAccount.riderCancellationFeeSec,
-    +params.riderCancellationFeeSec,
-    "riderCancellationFeeSec"
+    +countryAccount.customerCancellationFeeSec,
+    +params.customerCancellationFeeSec,
+    "customerCancellationFeeSec"
   );
   assert.equal(
     +countryAccount.baseRateCent,
@@ -67,9 +67,9 @@ export const initOrUpdateCountryAssert = async (
     "minDriverInfraDeposit"
   );
   assert.equal(
-    +countryAccount.minRiderInfraDeposit,
-    +params.minRiderInfraDeposit,
-    "minRiderInfraDeposit"
+    +countryAccount.minCustomerInfraDeposit,
+    +params.minCustomerInfraDeposit,
+    "minCustomerInfraDeposit"
   );
   assert.equal(
     +countryAccount.baseSlashAmount,

@@ -5,8 +5,8 @@ use anchor_spl::token::{self, Transfer};
 
 pub fn process_init_or_update_country(
     ctx: Context<InitOrUpdateCountry>,
-    params: InitOrUpdateCountryParam,
     alpha3_country_code: String,
+    params: InitOrUpdateCountryParam,
 ) -> Result<()> {
     let country_state = &mut ctx.accounts.country_state;
 
@@ -18,37 +18,28 @@ pub fn process_init_or_update_country(
         msg!("Init Country");
         country_state.is_initialized = true;
         country_state.alpha3_country_code = alpha3_country_code;
-        country_state.update_authority = ctx.accounts.initializer.key();
+        country_state.update_authority = ctx.accounts.authority.key();
         country_state.stable_mint = ctx.accounts.mint.key();
         params.init_new(country_state)?;
     } else {
         msg!("Updating Country");
-        if country_state.update_authority != ctx.accounts.initializer.key() {
+        if country_state.update_authority != ctx.accounts.authority.key() {
             return err!(ErrorCode::InvalidUpdateAuthority);
         }
 
         params.update_or_same(country_state)?;
     }
-    country_state.last_update = Clock::get().unwrap().unix_timestamp as u64;
 
     Ok(())
 }
 
 pub fn process_change_country_authority(ctx: Context<ChangeCountryAuthority>) -> Result<()> {
     ctx.accounts.country_state.update_authority = ctx.accounts.new_authority.key();
-    ctx.accounts.country_state.last_update = Clock::get().unwrap().unix_timestamp as u64;
     Ok(())
 }
 
-pub fn process_add_new_country_job(ctx: Context<InitOrUpdateJob>, job_name: String) -> Result<()> {
-    ctx.accounts.job_type.country_owner = ctx.accounts.country_state.key();
-    ctx.accounts.job_type.name = job_name;
-    ctx.accounts.job_type.is_available = true;
-    Ok(())
-}
-
-pub fn process_approve_rider_infra(ctx: Context<ApproveRiderInfra>) -> Result<()> {
-    ctx.accounts.rider_infra.is_verified = true;
+pub fn process_approve_customer_infra(ctx: Context<ApproveCustomerInfra>) -> Result<()> {
+    ctx.accounts.customer_infra.is_verified = true;
     Ok(())
 }
 pub fn process_approve_driver_infra(ctx: Context<ApproveDriverInfra>) -> Result<()> {
@@ -59,10 +50,11 @@ pub fn process_driver_infra_suspension(ctx: Context<DriverInfraSuspension>) -> R
     ctx.accounts.driver_infra.is_frozen = false;
     Ok(())
 }
-pub fn process_rider_infra_suspension(ctx: Context<RiderInfraSuspension>) -> Result<()> {
-    ctx.accounts.rider_infra.is_frozen = false;
+pub fn process_customer_infra_suspension(ctx: Context<CustomerInfraSuspension>) -> Result<()> {
+    ctx.accounts.customer_infra.is_frozen = false;
     Ok(())
 }
+// TODO: on-chain Slash logic?
 pub fn process_driver_infra_slash(
     ctx: Context<DriverInfraSlash>,
     driver_infra_count: u64,
@@ -91,24 +83,24 @@ pub fn process_driver_infra_slash(
     token::transfer(token_transfer_context, amount_to_slash)?;
     Ok(())
 }
-pub fn process_rider_infra_slash(
-    ctx: Context<RiderInfraSlash>,
-    rider_infra_count: u64,
+pub fn process_customer_infra_slash(
+    ctx: Context<CustomerInfraSlash>,
+    customer_infra_count: u64,
     base_slash_multiplier: f32,
 ) -> Result<()> {
-    // Transfer token rider_stable_account to country_token_account
-    let auth_bump = *ctx.bumps.get("rider_infra").unwrap();
+    // Transfer token customer_stable_account to country_token_account
+    let auth_bump = *ctx.bumps.get("customer_infra").unwrap();
     let seeds = &[
-        b"rider_infra".as_ref(),
-        &rider_infra_count.to_le_bytes(),
+        b"customer_infra".as_ref(),
+        &customer_infra_count.to_le_bytes(),
         &[auth_bump],
     ];
     let signer = &[&seeds[..]];
     let cpi_program = ctx.accounts.token_program.to_account_info();
     let cpi_accounts = Transfer {
-        from: ctx.accounts.rider_stable_account.to_account_info(),
+        from: ctx.accounts.customer_stable_account.to_account_info(),
         to: ctx.accounts.country_stable_account.to_account_info(),
-        authority: ctx.accounts.rider_infra.to_account_info(),
+        authority: ctx.accounts.customer_infra.to_account_info(),
     };
     let token_transfer_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
 

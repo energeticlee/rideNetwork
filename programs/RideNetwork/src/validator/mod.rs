@@ -1,4 +1,9 @@
 pub mod country_validator;
+pub mod customer_infra_validator;
+pub mod customer_validator;
+pub mod driver_infra_validator;
 pub mod driver_validator;
 pub mod global_validator;
-pub mod rider_validator;
+pub mod passenger_validator;
+pub mod service_validator;
+pub mod vehicle_validator;

@@ -3,19 +3,43 @@ import { Program } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { RideNetwork } from "../../target/types/ride_network";
 
-export const getCountryAddress = (program: Program<RideNetwork>) => {
+export const getGlobalAddress = (program: Program<RideNetwork>) => {
+  const [globalAddress, _globalAddressBump] = PublicKey.findProgramAddressSync(
+    [Buffer.from("global")],
+    program.programId
+  );
+  return globalAddress;
+};
+
+export const getGlobalData = async (program: Program<RideNetwork>) => {
+  const [globalAddress, _globalAddressBump] = PublicKey.findProgramAddressSync(
+    [Buffer.from("global")],
+    program.programId
+  );
+
+  const data = await program.account.global.fetch(globalAddress);
+  return data;
+};
+
+export const getCountryAddress = (
+  program: Program<RideNetwork>,
+  alpha3Code = "SGP"
+) => {
   const [countryAddress, _countryAddressBump] =
     PublicKey.findProgramAddressSync(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("country"))],
+      [Buffer.from("country"), Buffer.from(alpha3Code)],
       program.programId
     );
   return countryAddress;
 };
 
-export const getCountryData = async (program: Program<RideNetwork>) => {
+export const getCountryData = async (
+  program: Program<RideNetwork>,
+  alpha3Code = "SGP"
+) => {
   const [countryAddress, _countryAddressBump] =
     PublicKey.findProgramAddressSync(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("country"))],
+      [Buffer.from("country"), Buffer.from(alpha3Code)],
       program.programId
     );
 
@@ -23,15 +47,92 @@ export const getCountryData = async (program: Program<RideNetwork>) => {
   return data;
 };
 
+export const getServiceAddress = (
+  program: Program<RideNetwork>,
+  serviceCount: anchor.BN
+) => {
+  const [serviceAddress, _serviceAddressBump] =
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("offered_service"), serviceCount.toBuffer("le", 8)],
+      program.programId
+    );
+  return serviceAddress;
+};
+
+export const getServiceData = async (
+  program: Program<RideNetwork>,
+  serviceCount: anchor.BN
+) => {
+  const [serviceAddress, _serviceAddressBump] =
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("offered_service"), serviceCount.toBuffer("le", 8)],
+      program.programId
+    );
+  const data = await program.account.offeredService.fetch(serviceAddress);
+  return data;
+};
+
+export const getPassengerTypeAddress = (
+  program: Program<RideNetwork>,
+  passengerTypeCount: anchor.BN
+) => {
+  const [passengerTypeAddress, _passengerTypeAddressBump] =
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("passenger_type"), passengerTypeCount.toBuffer("le", 8)],
+      program.programId
+    );
+  return passengerTypeAddress;
+};
+
+export const getPassengerTypeData = async (
+  program: Program<RideNetwork>,
+  passengerTypeCount: anchor.BN
+) => {
+  const [passengerTypeAddress, _passengerTypeAddressBump] =
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("passenger_type"), passengerTypeCount.toBuffer("le", 8)],
+      program.programId
+    );
+  const data = await program.account.passengerTypes.fetch(passengerTypeAddress);
+  return data;
+};
+
+export const getVehicleAddress = (
+  program: Program<RideNetwork>,
+  vehicleCount: anchor.BN
+) => {
+  const [vehicleAddress, _vehicleAddressBump] =
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("vehicle"), vehicleCount.toBuffer("le", 8)],
+      program.programId
+    );
+  return vehicleAddress;
+};
+
+export const getVehicleData = async (
+  program: Program<RideNetwork>,
+  vehicleCount: anchor.BN
+) => {
+  const [vehicleAddress, _vehicleAddressBump] =
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("vehicle"), vehicleCount.toBuffer("le", 8)],
+      program.programId
+    );
+  const data = await program.account.vehicle.fetch(vehicleAddress);
+  return data;
+};
+
 export const getDriverInfraData = async (
   program: Program<RideNetwork>,
-  driverInfraOwner: PublicKey
+  driverInfraCount: anchor.BN,
+  alpha3Code = "SGP"
 ) => {
   const [driverInfraAddress, _driverInfraAddressBump] =
     PublicKey.findProgramAddressSync(
       [
-        Buffer.from(anchor.utils.bytes.utf8.encode("driver_infra")),
-        driverInfraOwner.toBuffer(),
+        Buffer.from("driver_infra"),
+        Buffer.from(alpha3Code),
+        driverInfraCount.toBuffer("le", 8),
       ],
       program.programId
     );
@@ -39,19 +140,21 @@ export const getDriverInfraData = async (
   return data;
 };
 
-export const getRiderInfraData = async (
+export const getCustomerInfraData = async (
   program: Program<RideNetwork>,
-  riderInfraOwner: PublicKey
+  customerInfraCount: anchor.BN,
+  alpha3Code = "SGP"
 ) => {
-  const [riderInfraAddress, _riderInfraAddressBump] =
+  const [customerInfraAddress, _customerInfraAddressBump] =
     PublicKey.findProgramAddressSync(
       [
-        Buffer.from(anchor.utils.bytes.utf8.encode("rider_infra")),
-        riderInfraOwner.toBuffer(),
+        Buffer.from("customer_infra"),
+        Buffer.from(alpha3Code),
+        customerInfraCount.toBuffer("le", 8),
       ],
       program.programId
     );
-  const data = await program.account.riderInfra.fetch(riderInfraAddress);
+  const data = await program.account.customerInfra.fetch(customerInfraAddress);
   return data;
 };
 
@@ -61,11 +164,7 @@ export const getCompanyInfraAddress = (
   count: anchor.BN
 ) => {
   const [infraAddress, _infraAddressBump] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from(anchor.utils.bytes.utf8.encode("company_info")),
-      infraPda.toBuffer(),
-      count.toBuffer("le", 8),
-    ],
+    [Buffer.from("company_info"), infraPda.toBuffer(), count.toBuffer("le", 8)],
     program.programId
   );
   return infraAddress;
@@ -77,11 +176,7 @@ export const getCompanyData = async (
   infraPda: PublicKey
 ) => {
   const [infraAddress, _infraAddressBump] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from(anchor.utils.bytes.utf8.encode("company_info")),
-      infraPda.toBuffer(),
-      count.toBuffer("le", 8),
-    ],
+    [Buffer.from("company_info"), infraPda.toBuffer(), count.toBuffer("le", 8)],
     program.programId
   );
   const data = await program.account.companyInfo.fetch(infraAddress);
@@ -90,92 +185,118 @@ export const getCompanyData = async (
 
 export const getDriverInfraAddress = (
   program: Program<RideNetwork>,
-  driverInfraOwner: PublicKey
+  driverInfraCount: anchor.BN,
+  alpha3Code = "SGP"
 ) => {
   const [driverInfraAddress, _driverInfraAddressBump] =
     PublicKey.findProgramAddressSync(
       [
-        Buffer.from(anchor.utils.bytes.utf8.encode("driver_infra")),
-        driverInfraOwner.toBuffer(),
+        Buffer.from("driver_infra"),
+        Buffer.from(alpha3Code),
+        driverInfraCount.toBuffer("le", 8),
       ],
       program.programId
     );
   return driverInfraAddress;
 };
 
-export const getDriverInfraDataByCreator = async (
+export const getAllDriverInfraData = async (program: Program<RideNetwork>) => {
+  const data = await program.account.driverInfra.all();
+  return data;
+};
+
+export const getDriverInfraDataByUpdateAuthority = async (
   program: Program<RideNetwork>,
-  driverInfraCreator: PublicKey
+  driverInfraUpdateAuthority: PublicKey
 ) => {
+  const alphaCodeByteSize = 4 + 3;
+
   const filter = [
     {
       memcmp: {
-        offset: 8, //prepend for anchor's discriminator
-        bytes: driverInfraCreator.toBase58(),
+        offset: 8 + alphaCodeByteSize, //prepend for anchor's discriminator
+        bytes: driverInfraUpdateAuthority.toBase58(),
       },
     },
   ];
-
   const data = await program.account.driverInfra.all(filter);
   return data[0];
 };
 
-export const getRiderInfraAddress = (
+export const getCustomerInfraAddress = (
   program: Program<RideNetwork>,
-  riderInfraOwner: PublicKey
+  customerInfraCount: anchor.BN,
+  alpha3Code = "SGP"
 ) => {
-  const [riderInfraAddress, _riderInfraAddressBump] =
+  const [customerInfraAddress, _customerInfraAddressBump] =
     PublicKey.findProgramAddressSync(
       [
-        Buffer.from(anchor.utils.bytes.utf8.encode("rider_infra")),
-        riderInfraOwner.toBuffer(),
+        Buffer.from("customer_infra"),
+        Buffer.from(alpha3Code),
+        customerInfraCount.toBuffer("le", 8),
       ],
       program.programId
     );
-  return riderInfraAddress;
+  return customerInfraAddress;
 };
 
-export const getRiderInfraDataByCreator = async (
+export const getCustomerInfraDataByAddress = async (
   program: Program<RideNetwork>,
-  riderInfraCreator: PublicKey
+  customerInfraAddress: PublicKey
 ) => {
+  const data = await program.account.customerInfra.fetch(customerInfraAddress);
+  return data[0];
+};
+
+export const getCustomerInfraDataByUpdateAuthority = async (
+  program: Program<RideNetwork>,
+  customerInfraUpdateAuthority: PublicKey
+) => {
+  const alphaCodeByteSize = 4 + 3;
+
   const filter = [
     {
       memcmp: {
-        offset: 8, //prepend for anchor's discriminator
-        bytes: riderInfraCreator.toBase58(),
+        offset: 8 + alphaCodeByteSize, //prepend for anchor's discriminator
+        bytes: customerInfraUpdateAuthority.toBase58(),
       },
     },
   ];
 
-  const data = await program.account.riderInfra.all(filter);
+  const data = await program.account.customerInfra.all(filter);
   return data[0];
+};
+
+export const getAllCustomerInfraData = async (
+  program: Program<RideNetwork>
+) => {
+  const data = await program.account.customerInfra.all();
+  return data;
 };
 
 export const getDriverAddress = (
   program: Program<RideNetwork>,
-  uuid: string
+  driverUuid: string
 ) => {
   const [driverAddress, _driverAddressBump] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from(anchor.utils.bytes.utf8.encode("driver")),
-      Buffer.from(anchor.utils.bytes.utf8.encode(uuid)),
-    ],
+    [Buffer.from("driver"), Buffer.from(driverUuid)],
     program.programId
   );
   return driverAddress;
 };
 
+export const getAllDriverData = async (program: Program<RideNetwork>) => {
+  const data = await program.account.driver.all();
+  return data;
+};
+
 export const getDriverData = async (
   program: Program<RideNetwork>,
-  uuid: string
+  driverUuid: string
 ) => {
   const [driverInfraAddress, _driverInfraAddressBump] =
     PublicKey.findProgramAddressSync(
-      [
-        Buffer.from(anchor.utils.bytes.utf8.encode("driver")),
-        Buffer.from(anchor.utils.bytes.utf8.encode(uuid)),
-      ],
+      [Buffer.from("driver"), Buffer.from(driverUuid)],
       program.programId
     );
   const data = await program.account.driver.fetch(driverInfraAddress);
@@ -195,14 +316,14 @@ export const getDriverInfraDataByAddress = async (
   return data;
 };
 
-export const getJobPda = async (
+export const getJobPda = (
   program: Program<RideNetwork>,
   driverInfraAddress: PublicKey,
   jobCount: anchor.BN
 ) => {
   const [jobAddress, _jobAddressBump] = PublicKey.findProgramAddressSync(
     [
-      Buffer.from(anchor.utils.bytes.utf8.encode("job")),
+      Buffer.from("job"),
       driverInfraAddress.toBuffer(),
       jobCount.toBuffer("le", 8),
     ],
@@ -213,16 +334,47 @@ export const getJobPda = async (
 
 export const getJobData = async (
   program: Program<RideNetwork>,
-  uuid: string
+  customer_infra: PublicKey,
+  driverUuid: string
 ) => {
   const filter = [
     {
       memcmp: {
-        offset: 8 + 4, // Offset discrimator and offset
-        bytes: anchor.utils.bytes.bs58.encode(Buffer.from(uuid)),
+        offset: 8 + 1 + 8, // Offset discrimator and offset
+        bytes: customer_infra.toBase58(),
+      },
+    },
+    {
+      memcmp: {
+        offset: 8 + 1 + 8 + 32 + 32 + 4, // Offset discrimator and offset
+        bytes: anchor.utils.bytes.bs58.encode(Buffer.from(driverUuid)),
+      },
+    },
+  ];
+  const data = await program.account.job.all(filter);
+  return data[0];
+};
+
+export const getJobDataWithUuid = async (
+  program: Program<RideNetwork>,
+  driverUuid: string
+) => {
+  const filter = [
+    {
+      memcmp: {
+        offset: 8 + 1 + 8 + 32 + 32 + 4, // Offset discrimator and offset
+        bytes: anchor.utils.bytes.bs58.encode(Buffer.from(driverUuid)),
       },
     },
   ];
   const data = await program.account.job.all(filter);
   return data[0].account;
+};
+
+export const getJobDataByAddress = async (
+  program: Program<RideNetwork>,
+  jobAddress: string
+) => {
+  const data = await program.account.job.fetch(jobAddress);
+  return data;
 };

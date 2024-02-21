@@ -5,19 +5,23 @@ import { RideNetwork } from "../../target/types/ride_network";
 import {} from "../utils/helperFn";
 import {
   getCompanyData,
+  getCountryData,
   getDriverData,
   getDriverInfraAddress,
   getDriverInfraData,
+  getJobData,
 } from "../utils/pda";
 import { IInitDriverInfraAssert, IUpdateInfraAssert } from "../utils/types";
 
 export const initDriverInfraAssert = async (
   program: anchor.Program<RideNetwork>,
   params: IInitDriverInfraAssert,
-  driverInfraOwner: PublicKey
+  driverInfraCount: anchor.BN,
+  driverInfraOwnner: PublicKey
 ) => {
-  const driverInfraData = await getDriverInfraData(program, driverInfraOwner);
-  const driverInfraAddress = getDriverInfraAddress(program, driverInfraOwner);
+  const countryData = await getCountryData(program);
+  const driverInfraData = await getDriverInfraData(program, driverInfraCount);
+  const driverInfraAddress = getDriverInfraAddress(program, driverInfraCount);
   const companyData = await getCompanyData(
     program,
     driverInfraData.companyInfoCurrentCount,
@@ -25,10 +29,10 @@ export const initDriverInfraAssert = async (
   );
   // ASSERT TEST
   expect(driverInfraData.updateAuthority.toString()).to.equal(
-    driverInfraOwner.toString()
+    driverInfraOwnner.toString()
   );
   expect(+driverInfraData.driverInfraCount).to.equal(
-    +params.driverInfraCount,
+    +countryData.driverInfraCounter - 1,
     "driverInfraCount"
   );
   expect(+driverInfraData.jobCounter).to.equal(0, "jobCounter");
@@ -40,17 +44,20 @@ export const initDriverInfraAssert = async (
     "driverInfraFeeBasisPoint"
   );
   expect(companyData.companyName).to.equal(params.companyName, "companyName");
-  expect(companyData.uen).to.equal(params.uen, "uen");
+  expect(companyData.entityRegistryId).to.equal(
+    params.entityRegistryId,
+    "entityRegistryId"
+  );
   expect(companyData.website).to.equal(params.website, "website");
 };
 
 export const updateDriverInfraCompanyAssert = async (
   program: anchor.Program<RideNetwork>,
   params: IUpdateInfraAssert,
-  driverInfraOwner: PublicKey
+  driverInfraCount: anchor.BN
 ) => {
-  const driverInfraData = await getDriverInfraData(program, driverInfraOwner);
-  const driverInfraAddress = getDriverInfraAddress(program, driverInfraOwner);
+  const driverInfraData = await getDriverInfraData(program, driverInfraCount);
+  const driverInfraAddress = getDriverInfraAddress(program, driverInfraCount);
   const companyData = await getCompanyData(
     program,
     driverInfraData.companyInfoCurrentCount,
@@ -63,20 +70,31 @@ export const updateDriverInfraCompanyAssert = async (
     "companyInfoCurrentCount"
   );
   expect(companyData.companyName).to.equal(params.companyName, "companyName");
-  expect(companyData.uen).to.equal(params.uen, "uen");
+  expect(companyData.entityRegistryId).to.equal(
+    params.entityRegistryId,
+    "entityRegistryId"
+  );
   expect(companyData.website).to.equal(params.website, "website");
+};
+
+export const assertVerifyDriverInfra = async (
+  program: anchor.Program<RideNetwork>,
+  driverInfraCount: anchor.BN
+) => {
+  const driverInfraData = await getDriverInfraData(program, driverInfraCount);
+  // ASSERT TEST
+  expect(driverInfraData.isVerified).to.equal(true, "isVerified");
 };
 
 export const createDriverAssert = async (
   program: anchor.Program<RideNetwork>,
-  uuid: string,
+  driverUuid: string,
   driverInfra: PublicKey,
-  currentLocation: { lat: number; long: number },
-  jobType: string
+  currentLocation: { lat: number; long: number }
 ) => {
-  const driverData = await getDriverData(program, uuid);
+  const driverData = await getDriverData(program, driverUuid);
   // ASSERT TEST
-  expect(driverData.uuid).to.equal(uuid, "uuid");
+  expect(driverData.driverUuid).to.equal(driverUuid, "driverUuid");
   expect(driverData.isInitialized).to.equal(true, "isInitialized");
   expect(driverData.infraAuthority.toString()).to.equal(
     driverInfra.toString(),
@@ -91,18 +109,20 @@ export const createDriverAssert = async (
     "currentLocation: Long"
   );
   expect(driverData.nextLocation).to.equal(null, "nextLocation");
-  expect(Object.keys(driverData.jobType)[0]).to.equal(jobType, "nextLocation");
 };
 
 export const updateDriverLocationAssert = async (
   program: anchor.Program<RideNetwork>,
-  uuid: string,
+  driverUuid: string,
   currentLocation: { lat: number; long: number },
   driverDataBefore: any
 ) => {
-  const driverData = await getDriverData(program, uuid);
+  const driverData = await getDriverData(program, driverUuid);
   // ASSERT TEST
-  expect(driverData.uuid).to.equal(driverDataBefore.uuid, "uuid");
+  expect(driverData.driverUuid).to.equal(
+    driverDataBefore.driverUuid,
+    "driverUuid"
+  );
   expect(driverData.isInitialized).to.equal(true, "isInitialized");
   expect(driverData.infraAuthority.toString()).to.equal(
     driverDataBefore.infraAuthority.toString(),
@@ -120,8 +140,17 @@ export const updateDriverLocationAssert = async (
     driverDataBefore.nextLocation,
     "nextLocation"
   );
-  expect(Object.keys(driverData.jobType)[0]).to.equal(
-    Object.keys(driverDataBefore.jobType)[0],
-    "nextLocation"
+};
+
+export const assertDriverCompleteJob = async (
+  program: anchor.Program<RideNetwork>,
+  driverUuid: string,
+  customerInfraPda: PublicKey
+) => {
+  const jobData = await getJobData(program, customerInfraPda, driverUuid);
+  // ASSERT TEST
+  expect(Object.keys(jobData.account.status)[0]).to.equal(
+    "completed",
+    "status"
   );
 };
